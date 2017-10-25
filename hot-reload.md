@@ -43,43 +43,26 @@ The app is updated to reflect your change, and the current state of the app
 app continues to execute from where it was prior to running the hot reload
 command. The code is updated and execution continues.
 
+## Understanding when a full app restart is needed
+
 A code change has a visible effect only if the modified Dart code is run again
 after the change. The following section describes common code patterns where the
 modified code will _not_ run again after hot reload.
 
-## Troubleshooting hot reload
-
-When you start working with hot reload and using it frequently, you'll likely
-encounter the types of code changes that might need a full app restart:
-
-*   Changing the `main()` method of the app
-*   Initializing global variables
-*   Initializing static fields
-
-You can adapt your code to work around the above cases so that hot reload is
-still an option, for example by evaluating an initialization expression after
-making a change. To do this in IntelliJ, you could select the `reinitialize`
-option from the context menu in a field declaration. Without adaptations,
-however, hot reload will generate an exception in these cases.
-
-This section gives detailed examples of edge cases for hot reload where there
-is no active call stack in the Dart VM. They apply to most Flutter app
-development cycles. Other subtle interactions that can occur when there is an
-active call stack (such as when an animation is in progress) are not covered
-here.
-
-### Recent UI change is excluded
-
-Even when a hot reload operation appears successful and generates no exceptions,
-some code changes might not be visible in the refreshed UI. This behavior is
-common after changes to the app's `main()` method.
-
 As a general rule, if the modified code is downstream of the root widget's
 build method, then hot reload behaves as expected. However, if the modified code
 won't be re-executed as a result of rebuilding the widget tree, then you won't
-see its effects after hot reload.
+see its effects after hot reload. Some common cases for this includes:
 
-For example, consider the following code:
+*   Changing the `main()` method of the app
+*   Changing initialization of global variables & static fields
+*   Previous state is combined with new code 
+
+### Changing the `main()` method of the app
+
+In Dart, the `main()` method is executed just once, when the app starts
+for the first time. For example, consider the following code:
+
 ```
 import 'package:flutter/material.dart';
 
@@ -106,7 +89,6 @@ void main() {
   }
 ```
 
-
 With a full restart, the program starts from the beginning, executes the new
 version of `main()`, and builds a widget tree that displays the text `Hello`.
 
@@ -114,8 +96,7 @@ However, if you hot reload the app after this change, `main()` is not
 re-executed, and the widget tree is rebuilt with the unchanged instance of 
 `MyApp` as the root widget. The result is no visible change after hot reload.
 
-
-### Recent code change is included but app state is excluded
+### Changing initialization of global variables & static fields
 
 In Dart, [static fields are lazily initialized](https://news.dartlang.org/2012/02/static-variables-no-longer-have-to-be.html). This means that the first time you run a Flutter app and a static field is read,
 it is set to whatever value its initializer was evaluated to. Thus if you change
@@ -239,10 +220,10 @@ and then hot reload, the console displays an assertion failure similar to:
 myWidget is not a subtype of StatelessWidget
 ```
 
-## Understanding limitations
+## Understanding limitations of hot reload
 
-In addition to edge cases, you might also encounter the rare scenarios where hot
-reload is not supported at all.  These include:
+You might also encounter rare scenarios where hot reload is not supported at all.
+These include:
 
 *   Changed source files have compilation errors.
 *   Enumerated types are changed to regular classes or regular classes are
