@@ -1,4 +1,4 @@
-# [Flutter][]'s website
+# [Flutter][]'s awesome website
 
 The website for [Flutter][].
 
